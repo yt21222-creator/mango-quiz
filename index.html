@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>找找芒果家族～看你認得幾個！🍋</title>
+<title>找找芒果家族～看你認得幾個！🥭</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
     body { font-family: "Inter", Arial, sans-serif; }
@@ -18,13 +18,66 @@
         background-size: 1.5rem 1.5rem;
         padding-right: 2.5rem;
     }
+
+    /* 小精靈動畫 */
+    .fairy {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 60px;
+        height: 60px;
+        background-image: url('https://i.imgur.com/OMY0zXb.png'); /* 小精靈圖 */
+        background-size: contain;
+        background-repeat: no-repeat;
+        z-index: 1000;
+        pointer-events: none;
+        animation: fly 4s ease-in-out forwards, twinkle 0.5s infinite alternate;
+    }
+    @keyframes fly {
+        0% { transform: translate(100px, 50px) rotate(0deg); opacity:0; }
+        50% { transform: translate(-20px, -40px) rotate(15deg); opacity:1; }
+        100% { transform: translate(0, 0) rotate(-15deg); opacity:1; }
+    }
+    @keyframes twinkle {
+        0% { filter: brightness(1); }
+        100% { filter: brightness(1.5); }
+    }
+
+    .fairy-text {
+        position: fixed;
+        bottom: 90px;
+        right: 20px;
+        background-color: #F0E68C;
+        padding: 10px 15px;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        font-size: 0.9rem;
+        opacity: 0;
+        animation: fadeIn 0.5s forwards;
+        z-index: 1001;
+    }
+    @keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
+
+    /* 光點尾巴 */
+    .fairy-tail {
+        position: absolute;
+        width: 6px;
+        height: 6px;
+        background: radial-gradient(circle, #FFD700 0%, rgba(255,215,0,0) 70%);
+        border-radius: 50%;
+        animation: tailMove 0.8s linear infinite;
+    }
+    @keyframes tailMove {
+        0% { transform: translate(0,0) scale(1); opacity:1; }
+        100% { transform: translate(-30px,-30px) scale(0.2); opacity:0; }
+    }
 </style>
 </head>
 <body class="bg-amber-50 min-h-screen flex items-center justify-center p-4">
 
 <div class="bg-white p-6 md:p-10 rounded-xl shadow-2xl max-w-lg w-full">
     <h1 class="text-3xl font-extrabold text-center text-orange-600 mb-6 border-b pb-3">
-        找找芒果家族～看你認得幾個！🍋
+        找找芒果家族～看你認得幾個！🥭
     </h1>
 
     <div class="game-rules p-4 mb-6 rounded-lg shadow-md text-gray-700">
@@ -34,7 +87,7 @@
         <ul class="list-disc ml-5 space-y-1 text-sm">
             <li>遊戲共有 <strong>16 道題目</strong>，每次玩題目順序都會隨機變化。</li>
             <li>看到芒果家族成員的小特徵或喜好，從下方下拉選單選出名字。</li>
-            <li>卡關時，可使用 <strong>✨ 線索解釋器</strong> 獲得小提示。</li>
+            <li>卡關時，可使用 <strong>✨ 小精靈提示</strong> 獲得幽默暗示，但不會直接告訴答案。</li>
         </ul>
     </div>
 
@@ -48,12 +101,10 @@
             <button id="tts-button" onclick="speakClue()" class="flex items-center justify-center w-full py-2 text-white font-semibold rounded-lg bg-indigo-500 shadow-md transition duration-300 hover:bg-indigo-600 disabled:opacity-50">
                 ✨ 唸出線索
             </button>
-            <button id="explainer-button" onclick="getExplanation()" class="flex items-center justify-center w-full py-2 text-white font-semibold rounded-lg bg-purple-500 shadow-md transition duration-300 hover:bg-purple-600 disabled:opacity-50">
-                ✨ 線索解釋器
+            <button id="explainer-button" onclick="showFairyHint()" class="flex items-center justify-center w-full py-2 text-white font-semibold rounded-lg bg-purple-500 shadow-md transition duration-300 hover:bg-purple-600 disabled:opacity-50">
+                ✨ 小精靈提示
             </button>
         </div>
-
-        <div id="explanation-output" class="p-4 bg-purple-50 rounded-lg border border-purple-200 text-gray-700 text-sm italic" style="display:none;"></div>
 
         <select id="answer_select" class="w-full p-3 border-2 border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition duration-300 text-lg">
             <option value="" disabled selected>-- 請選擇您的答案 --</option>
@@ -67,12 +118,13 @@
     <div id="result" class="text-center space-y-4 pt-6" style="display:none;">
         <h2 class="text-4xl font-black text-green-600">🎉 遊戲結束！🎉</h2>
         <p class="text-2xl font-bold text-gray-700" id="score"></p>
-        <p class="text-lg text-gray-500">感謝你挑戰芒果家族小偵探大冒險 🍋😆</p>
+        <p class="text-lg text-gray-500">感謝你挑戰芒果家族小偵探大冒險 🥭😆</p>
         <button onclick="location.reload()" class="py-2 px-6 text-white font-semibold rounded-full bg-blue-500 hover:bg-blue-600 transition">再玩一次</button>
     </div>
 </div>
 
 <script>
+// 成員資料
 let membersData = [
     {name:"芒果哥",clues:["視覺年齡騙子，常被誤認是阿皮的爸爸","龍門社區志工隊大隊長","擁有一位身材火辣的老婆"]},
     {name:"小英姊",clues:["拍照界的交叉腿戰士","每次出鏡都必備剪刀腳和側身技能"]},
@@ -98,7 +150,7 @@ let allNames = membersData.map(m=>m.name).sort();
 let current=0, score=0;
 
 const funnyCorrect=["太棒了！你果然認得他！😆","答對啦！小偵探威武！🎉","正確！芒果會為你鼓掌👏","Bingo! 這是你的分數！🥳"];
-const funnyWrong=["哎呀，答錯了～再試一次！😜","錯啦！芒果在哭😭","不對不對！快重新集中精神💦","Opps! 謎題太難了嗎？"];
+const funnyWrong=["哎呀，答錯了～再試一次！😜","錯啦，芒果在哭😭","不對不對！快重新集中精神💦","Opps! 謎題太難了嗎？"];
 
 function shuffleArray(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}}
 
@@ -113,13 +165,8 @@ function showClues(){
     selectElement.innerHTML='<option value="" disabled selected>-- 請選擇您的答案 --</option>';
     allNames.forEach(name=>{const option=document.createElement('option');option.value=name;option.text=name;selectElement.appendChild(option);});
     document.getElementById('message').innerText="";
-    document.getElementById('message').className="message p-3 rounded-lg text-center";
-    const outputDiv=document.getElementById('explanation-output');
-    outputDiv.style.display='none'; outputDiv.innerHTML='';
-    selectElement.focus();
 }
 
-// 語音念出線索
 function speakClue(){
     if(!('speechSynthesis' in window)){alert("您的瀏覽器不支援語音合成功能"); return;}
     let text = members[current].clues.join('。 ');
@@ -128,11 +175,41 @@ function speakClue(){
     speechSynthesis.speak(utterance);
 }
 
-// 小精靈提示 (暫時顯示提示文字)
-function getExplanation() {
-    const outputDiv = document.getElementById('explanation-output');
-    outputDiv.style.display = 'block';
-    outputDiv.innerText = "小精靈悄悄說：這個成員很有特色，要仔細看看線索喔 😆";
+// 小精靈提示動畫 + 尾巴
+function showFairyHint() {
+    const clues = members[current].clues;
+    const clue = clues[Math.floor(Math.random()*clues.length)];
+
+    const styles = [
+        (c)=>`嘻嘻～小精靈提醒你：注意「${c.split('，')[0]}」💖`,
+        (c)=>`神秘小精靈說：可能藏在「${c.split('，')[0]}」...🤫`,
+        (c)=>`滑稽小精靈提示：看到「${c.split('，')[0]}」忍不住笑🤣`
+    ];
+    const styleFunc = styles[Math.floor(Math.random()*styles.length)];
+    const text = styleFunc(clue);
+
+    // 創建小精靈元素
+    const fairy = document.createElement('div');
+    fairy.className = 'fairy';
+
+    // 添加光點尾巴
+    for(let i=0;i<5;i++){
+        const tail = document.createElement('div');
+        tail.className='fairy-tail';
+        tail.style.animationDelay=`${i*0.1}s`;
+        fairy.appendChild(tail);
+    }
+    document.body.appendChild(fairy);
+
+    const fairyText = document.createElement('div');
+    fairyText.className = 'fairy-text';
+    fairyText.innerText = text;
+    document.body.appendChild(fairyText);
+
+    setTimeout(()=>{
+        fairy.remove();
+        fairyText.remove();
+    },4000);
 }
 
 function checkAnswer(){
