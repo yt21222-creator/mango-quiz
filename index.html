@@ -27,6 +27,7 @@
         找找芒果家族～看你認得幾個！🍋
     </h1>
 
+    <!-- 更新後遊戲規則 -->
     <div class="game-rules p-4 mb-6 rounded-lg shadow-md text-gray-700">
         <h3 class="text-xl font-bold text-orange-600 mb-2 flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 mr-2">
@@ -35,9 +36,9 @@
             遊戲規則 (LLM 增強版)
         </h3>
         <ul class="list-disc ml-5 space-y-1 text-sm">
-            <li>遊戲共有 <strong>16 道題目</strong>，題目順序會隨機變化。</li>
-            <li>您將看到成員的特徵或喜好，請從下方的<strong>下拉選單中選擇</strong>您猜測的名字。</li>
-            <li>您可以使用 <strong>✨ LLM 功能</strong>來獲取幫助！</li>
+            <li>遊戲共有 <strong>16 道題目</strong>，每次玩題目順序都會隨機變化，不會重複！</li>
+            <li>你會看到芒果家族成員的小特徵或喜好，請從下方的 <strong>下拉選單</strong> 選出你認為的名字。</li>
+            <li>遇到卡關？別擔心，可以使用 <strong>✨ LLM 功能</strong>來偷偷獲得提示，幫你破關！</li>
         </ul>
     </div>
 
@@ -49,21 +50,14 @@
 
         <div class="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-3">
             <button id="tts-button" onclick="speakClue()" class="flex items-center justify-center w-full py-2 text-white font-semibold rounded-lg bg-indigo-500 shadow-md transition duration-300 hover:bg-indigo-600 disabled:opacity-50">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25h4.5a.75.75 0 0 0 .75-.75V5.25a.75.75 0 0 0-.75-.75h-4.5a.75.75 0 0 0-.75.75v2.25c0 .414.336.75.75.75Zm-3 5.25H7.5a.75.75 0 0 0 .75-.75V9.75a.75.75 0 0 0-.75-.75H3.75A.75.75 0 0 0 3 9.75v2.25c0 .414.336.75.75.75Zm-.75 3.75a.75.75 0 0 0 .75.75h4.5a.75.75 0 0 0 .75-.75v-2.25c0-.414-.336-.75-.75-.75h-4.5a.75.75 0 0 0-.75.75v2.25Z" />
-                </svg>
                 ✨ 唸出線索
             </button>
             <button id="explainer-button" onclick="getExplanation()" class="flex items-center justify-center w-full py-2 text-white font-semibold rounded-lg bg-purple-500 shadow-md transition duration-300 hover:bg-purple-600 disabled:opacity-50">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
-                </svg>
                 ✨ 線索解釋器
             </button>
         </div>
 
         <div id="explanation-output" class="p-4 bg-purple-50 rounded-lg border border-purple-200 text-gray-700 text-sm italic" style="display:none;"></div>
-        <audio id="tts-audio" class="w-full mt-2" style="display:none;" controls></audio>
 
         <select id="answer_select" class="w-full p-3 border-2 border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition duration-300 text-lg">
             <option value="" disabled selected>-- 請選擇您的答案 --</option>
@@ -101,10 +95,12 @@ let membersData = [
     {name:"廖光光",clues:["高帥到連天花板都想低頭看他","胸前小漏斗像專屬設計","腳扁得像在地板上貼了加速器"]},
     {name:"健閔哥",clues:["雲林金城武","外表帥氣，氣場非凡"]}
 ];
+
 let totalQuestions = membersData.length;
 let members = [];
 let allNames = membersData.map(m=>m.name).sort();
 let current=0, score=0;
+
 const funnyCorrect=["太棒了！你果然認得他！😆","答對啦！小偵探威武！🎉","正確！芒果會為你鼓掌👏","Bingo! 這是你的分數！🥳"];
 const funnyWrong=["哎呀，答錯了～再試一次！😜","錯啦！芒果在哭😭","不對不對！快重新集中精神💦","Opps! 謎題太難了嗎？"];
 
@@ -124,8 +120,16 @@ function showClues(){
     document.getElementById('message').className="message p-3 rounded-lg text-center";
     const outputDiv=document.getElementById('explanation-output');
     outputDiv.style.display='none'; outputDiv.innerHTML='';
-    const audioPlayer=document.getElementById('tts-audio'); audioPlayer.pause(); audioPlayer.src=''; audioPlayer.style.display='none';
     selectElement.focus();
+}
+
+// 語音念出線索
+function speakClue(){
+    if(!('speechSynthesis' in window)){alert("您的瀏覽器不支援語音合成功能"); return;}
+    let text = members[current].clues.join('。 ');
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-TW';
+    speechSynthesis.speak(utterance);
 }
 
 function checkAnswer(){
@@ -146,6 +150,7 @@ function checkAnswer(){
 
 function showResult(){document.getElementById('game').style.display="none";document.getElementById('result').style.display="block";document.getElementById('score').innerText=`你總共答對 ${score} / ${totalQuestions} 位芒果家族成員！`;}
 
+// 初始化
 document.addEventListener('DOMContentLoaded',()=>{members=[...membersData];shuffleArray(members);showClues();});
 </script>
 
