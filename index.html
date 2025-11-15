@@ -18,14 +18,6 @@
         background-size: 1.5rem 1.5rem;
         padding-right: 2.5rem;
     }
-    #explanation-output { 
-        animation: float 2s ease-in-out infinite, fadein 0.5s;
-    }
-    @keyframes float {
-        0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-5px); }
-    }
-    @keyframes fadein { from {opacity:0;} to{opacity:1;} }
 </style>
 </head>
 <body class="bg-amber-50 min-h-screen flex items-center justify-center p-4">
@@ -36,13 +28,13 @@
     </h1>
 
     <div class="game-rules p-4 mb-6 rounded-lg shadow-md text-gray-700">
-        <h3 class="text-xl font-bold text-orange-600 mb-2 flex items-center">
-            遊戲規則 (小精靈版)
+        <h3 class="text-xl font-bold text-orange-600 mb-2">
+            遊戲規則
         </h3>
         <ul class="list-disc ml-5 space-y-1 text-sm">
             <li>遊戲共有 <strong>16 道題目</strong>，每次玩題目順序都會隨機變化，不會重複！</li>
             <li>你會看到芒果家族成員的小特徵或喜好，請從下方的 <strong>下拉選單</strong> 選出你認為的名字。</li>
-            <li>遇到卡關？別擔心，可以使用 <strong>🧚‍♀️ 小精靈提示</strong> 來獲取幽默提示，幫你破關！</li>
+            <li>遇到卡關？可以使用 <strong>✨ 線索解釋器</strong> 來獲得幽默提示！</li>
         </ul>
     </div>
 
@@ -56,12 +48,12 @@
             <button id="tts-button" onclick="speakClue()" class="flex items-center justify-center w-full py-2 text-white font-semibold rounded-lg bg-indigo-500 shadow-md transition duration-300 hover:bg-indigo-600 disabled:opacity-50">
                 ✨ 唸出線索
             </button>
-            <button id="explainer-button" onclick="getExplanation()" class="flex items-center justify-center w-full py-2 text-white font-semibold rounded-lg bg-pink-500 shadow-md transition duration-300 hover:bg-pink-600 disabled:opacity-50">
-                🧚‍♀️ 小精靈提示
+            <button id="explainer-button" class="flex items-center justify-center w-full py-2 text-white font-semibold rounded-lg bg-purple-500 shadow-md transition duration-300 hover:bg-purple-600 disabled:opacity-50">
+                ✨ 線索解釋器
             </button>
         </div>
 
-        <div id="explanation-output" class="p-4 bg-pink-50 rounded-lg border border-pink-200 text-gray-700 text-sm italic" style="display:none;"></div>
+        <div id="explanation-output" class="p-4 bg-purple-50 rounded-lg border border-purple-200 text-gray-700 text-sm italic" style="display:none;"></div>
 
         <select id="answer_select" class="w-full p-3 border-2 border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition duration-300 text-lg">
             <option value="" disabled selected>-- 請選擇您的答案 --</option>
@@ -76,44 +68,46 @@
         <h2 class="text-4xl font-black text-green-600">🎉 遊戲結束！🎉</h2>
         <p class="text-2xl font-bold text-gray-700" id="score"></p>
         <p class="text-lg text-gray-500">感謝你挑戰芒果家族小偵探大冒險 🍋😆</p>
-        <button class="py-2 px-6 text-white font-semibold rounded-full bg-blue-500 hover:bg-blue-600 transition">再玩一次</button>
+        <button onclick="startGame()" class="py-2 px-6 text-white font-semibold rounded-full bg-blue-500 hover:bg-blue-600 transition">再玩一次</button>
     </div>
 </div>
 
 <script>
 let membersData = [
-    {name:"芒果哥",clues:["視覺年齡騙子，常被誤認是阿皮的爸爸","龍門社區志工隊大隊長","擁有一位身材火辣的老婆"]},
-    {name:"小英姊",clues:["拍照界的交叉腿戰士","每次出鏡都必備剪刀腳和側身技能"]},
-    {name:"宣萱姊",clues:["腦子裡裝了全部人的喜好資料庫","果哥英姊最愛的小孩","隨身有塑膠袋跟衛生紙"]},
-    {name:"阿福哥",clues:["帥＋歌喉雙技能","自帶BGM的傳說級存在！","女兒是他的迷你複製版！"]},
-    {name:"陳臻臻",clues:["不只是 ONCE，腦袋裡有 TWICE 自動播放清單","最大罩門是：芭樂"]},
-    {name:"陳妹妹",clues:["骨裂界的至尊VIP,二次入場券已領！","個性強到骨折都像在休假","有個複製人老爸"]},
-    {name:"陳阿叡",clues:["左手轉魔方，右手甩舞步","唯一能同時打破重力和時間的國中生"]},
-    {name:"李歪頭",clues:["人見人愛","人見人愛","人見人愛"]},
-    {name:"尚勳哥",clues:["長得帥連自拍都嫉妒","腿長到拍照不用角度","雖然是沒有腹肌的消防英雄，但他證明了「帥氣就是最好的裝備！」"]},
-    {name:"李芝麻",clues:["活潑可愛的工程師肥宅","女兒是他的等比例縮小版"]},
-    {name:"岳阿文",clues:["漂亮＋歌喉＋駕駛技術","走到哪都自帶演唱會＋車技表演秀"]},
-    {name:"李蒜皮",clues:["有個複製人爸爸","活力無限像插了兩百伏特電池","芒果家族的老么"]},
-    {name:"李阿玟",clues:["金字塔頂尖","家裡有隻黑貓叫李阿皮","氣場強大到連蚊子都必須先預約才能靠近他，否則會被氣場彈飛！","天生骨架可以駕馭各種服裝"]},
-    {name:"廖亮亮",clues:["舞蹈女王降臨","遇到辣和燙的食物就會立刻投降"]},
-    {name:"廖光光",clues:["高帥到連天花板都為他低頭","漏斗胸和扁平足","果園小開"]},
-    {name:"健閔哥",clues:["雲林金城武","外表帥氣，氣場非凡到手機訊號都會自動變滿格"]}
+  {name:"芒果哥",clues:["視覺年齡騙子，常被誤認是阿皮的爸爸","龍門社區志工隊大隊長","擁有一位身材火辣的老婆"]},
+  {name:"小英姊",clues:["拍照界的交叉腿戰士","每次出鏡都必備剪刀腳和側身技能"]},
+  {name:"宣萱姊",clues:["腦子裡裝了全部人的喜好資料庫","果哥英姊最愛的小孩","隨身有塑膠袋跟衛生紙"]},
+  {name:"阿福哥",clues:["帥＋歌喉雙技能","自帶BGM的傳說級存在！","女兒是他的迷你複製版！"]},
+  {name:"陳臻臻",clues:["不只是 ONCE，腦袋裡有 TWICE 自動播放清單","最大罩門是：芭樂"]},
+  {name:"陳妹妹",clues:["骨裂界的至尊VIP,二次入場券已領！","個性強到骨折都像在休假","有個複製人老爸"]},
+  {name:"陳阿叡",clues:["左手轉魔方，右手甩舞步","唯一能同時打破重力和時間的國中生"]},
+  {name:"李歪頭",clues:["人見人愛","人見人愛","人見人愛"]},
+  {name:"尚勳哥",clues:["長得帥連自拍都嫉妒","腿長到拍照不用角度","雖然是沒有腹肌的消防英雄，但他證明了「帥氣就是最好的裝備！」"]},
+  {name:"李芝麻",clues:["活潑可愛的工程師肥宅","女兒是他的等比例縮小版"]},
+  {name:"岳阿文",clues:["漂亮＋歌喉＋駕駛技術","走到哪都自帶演唱會＋車技表演秀"]},
+  {name:"李蒜皮",clues:["有個複製人爸爸","活力無限像插了兩百伏特電池","芒果家族的老么"]},
+  {name:"李阿玟",clues:["金字塔頂尖","家裡有隻黑貓叫李阿皮","氣場強大到連蚊子都必須先預約才能靠近他，否則會被氣場彈飛！","天生骨架可以駕馭各種服裝"]},
+  {name:"廖亮亮",clues:["舞蹈女王降臨","遇到辣和燙的食物就會立刻投降"]},
+  {name:"廖光光",clues:["高帥到連天花板都為他低頭","漏斗胸和扁平足","果園小開"]},
+  {name:"健閔哥",clues:["雲林金城武","外表帥氣，氣場非凡到手機訊號都會自動變滿格"]}
 ];
 
 let totalQuestions = membersData.length;
 let members = [];
 let allNames = membersData.map(m=>m.name).sort();
 let current=0, score=0;
+
 const funnyCorrect=["太棒了！你果然認得他！😆","答對啦！小偵探威武！🎉","正確！芒果會為你鼓掌👏","Bingo! 這是你的分數！🥳"];
 const funnyWrong=["哎呀，答錯了～再試一次！😜","錯啦！芒果在哭😭","不對不對！快重新集中精神💦","Opps! 謎題太難了嗎？"];
 
 function shuffleArray(array){
     for(let i=array.length-1;i>0;i--){
         const j=Math.floor(Math.random()*(i+1));
-        [array[i], array[j]]=[array[j], array[i]];
+        [array[i],array[j]]=[array[j],array[i]];
     }
 }
 
+// 顯示線索
 function showClues(){
     if(current>=totalQuestions){showResult();return;}
     const clueDiv=document.getElementById('clues');
@@ -121,61 +115,30 @@ function showClues(){
     const selectElement=document.getElementById('answer_select');
     questionCount.innerText=`第 ${current+1} / ${totalQuestions} 題`;
     clueDiv.innerHTML='';
-    members[current].clues.forEach((c,i)=>{clueDiv.innerHTML+=`<p class="${i>0?'mt-2':''} text-base"><strong>線索 ${i+1}:</strong> ${c}</p>`;});
+    members[current].clues.forEach((c,i)=>{
+        clueDiv.innerHTML+=`<p class="${i>0?'mt-2':''} text-base"><strong>線索 ${i+1}:</strong> ${c}</p>`;
+    });
     selectElement.innerHTML='<option value="" disabled selected>-- 請選擇您的答案 --</option>';
-    allNames.forEach(name=>{const option=document.createElement('option');option.value=name;option.text=name;selectElement.appendChild(option);});
+    allNames.forEach(name=>{
+        const option=document.createElement('option');
+        option.value=name;
+        option.text=name;
+        selectElement.appendChild(option);
+    });
     document.getElementById('message').innerText="";
     document.getElementById('message').className="message p-3 rounded-lg text-center";
-    const outputDiv=document.getElementById('explanation-output');
-    outputDiv.style.display='none'; outputDiv.innerHTML='';
-    selectElement.focus();
 }
 
+// 語音念出線索
 function speakClue(){
     if(!('speechSynthesis' in window)){alert("您的瀏覽器不支援語音合成功能"); return;}
-    speechSynthesis.cancel();
     let text = members[current].clues.join('。 ');
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'zh-TW';
     speechSynthesis.speak(utterance);
 }
 
-async function getExplanation(){
-    const explainerButton=document.getElementById('explainer-button');
-    explainerButton.disabled = true;
-    const outputDiv=document.getElementById('explanation-output');
-    outputDiv.style.display='block';
-    outputDiv.innerHTML='小精靈正在思考中...🧚‍♀️';
-    try {
-        const response = await fetch("https://api.openai.com/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer YOUR_OPENAI_API_KEY"
-            },
-            body: JSON.stringify({
-                model: "gpt-4",
-                messages: [
-                    {
-                        role: "user",
-                        content: `請以可愛小精靈語氣，用幽默短句幫我解釋這些線索，提示成員名字，但不要直接說出名字：${members[current].clues.join(' / ')}`
-                    }
-                ],
-                temperature:0.7,
-                max_tokens:150
-            })
-        });
-        const data = await response.json();
-        const explanation = data.choices[0].message.content;
-        outputDiv.innerHTML = "🧚‍♀️ 小精靈悄悄說：" + explanation;
-    } catch (err) {
-        outputDiv.innerHTML = "小精靈迷路了，提示取得失敗😢";
-        console.error(err);
-    } finally {
-        explainerButton.disabled = false;
-    }
-}
-
+// 檢查答案
 function checkAnswer(){
     const submitButton=document.querySelector('button[onclick="checkAnswer()"]');
     const explainerButton=document.getElementById('explainer-button');
@@ -185,10 +148,16 @@ function checkAnswer(){
     const userAnswer=selectElement.value;
     const messageDiv=document.getElementById('message');
     const correctAnswer=members[current].name;
-    if(userAnswer===""){messageDiv.innerText="請選擇一個成員名稱！";messageDiv.className="message p-3 rounded-lg text-center bg-yellow-200 text-yellow-800";submitButton.disabled=false;explainerButton.disabled=false;ttsButton.disabled=false;return;}
+    if(userAnswer===""){
+        messageDiv.innerText="請選擇一個成員名稱！";
+        messageDiv.className="message p-3 rounded-lg text-center bg-yellow-200 text-yellow-800";
+        submitButton.disabled=false; explainerButton.disabled=false; ttsButton.disabled=false;
+        return;
+    }
     if(userAnswer===correctAnswer){
         messageDiv.innerHTML=`✅ <strong>答對啦！</strong> ${correctAnswer}！ ${funnyCorrect[Math.floor(Math.random()*funnyCorrect.length)]}`;
-        messageDiv.className="message p-3 rounded-lg text-center bg-green-200 text-green-800";score++;
+        messageDiv.className="message p-3 rounded-lg text-center bg-green-200 text-green-800";
+        score++;
     } else {
         messageDiv.innerHTML=`❌ <strong>答錯啦！</strong> ${funnyWrong[Math.floor(Math.random()*funnyWrong.length)]}<br>正確答案是：<span class="font-black text-red-600">${correctAnswer}</span>`;
         messageDiv.className="message p-3 rounded-lg text-center bg-red-200 text-red-800";
@@ -198,33 +167,32 @@ function checkAnswer(){
         if(current<totalQuestions){
             showClues();
             submitButton.disabled=false; explainerButton.disabled=false; ttsButton.disabled=false;
-        } else showResult();
+        } else {
+            showResult();
+        }
     },2000);
 }
 
+// 顯示結果
 function showResult(){
     document.getElementById('game').style.display="none";
     document.getElementById('result').style.display="block";
-    let percent = Math.round((score / totalQuestions) * 100);
-    document.getElementById('score').innerText=`你總共答對 ${score} / ${totalQuestions} 位芒果家族成員！ (${percent}%)`;
+    document.getElementById('score').innerText=`你總共答對 ${score} / ${totalQuestions} 位芒果家族成員！`;
 }
 
-// ------------------ 新增：開始遊戲函式 ------------------
+// 初始化或再玩一次
 function startGame(){
     members = [...membersData];
     shuffleArray(members);
     current = 0;
     score = 0;
-    document.getElementById('game').style.display = "block";
-    document.getElementById('result').style.display = "none";
+    document.getElementById('game').style.display="block";
+    document.getElementById('result').style.display="none";
     showClues();
 }
 
-// 初始啟動
+// 初始化
 document.addEventListener('DOMContentLoaded', startGame);
-
-// 再玩一次按鈕
-document.getElementById('result').querySelector('button').onclick = startGame;
 </script>
 
 </body>
