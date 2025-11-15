@@ -18,12 +18,14 @@
         background-size: 1.5rem 1.5rem;
         padding-right: 2.5rem;
     }
-    /* 小精靈飄浮動畫 */
-    #explanation-output { animation: float 2s ease-in-out infinite; }
+    #explanation-output { 
+        animation: float 2s ease-in-out infinite, fadein 0.5s;
+    }
     @keyframes float {
         0%, 100% { transform: translateY(0); }
         50% { transform: translateY(-5px); }
     }
+    @keyframes fadein { from {opacity:0;} to{opacity:1;} }
 </style>
 </head>
 <body class="bg-amber-50 min-h-screen flex items-center justify-center p-4">
@@ -74,7 +76,7 @@
         <h2 class="text-4xl font-black text-green-600">🎉 遊戲結束！🎉</h2>
         <p class="text-2xl font-bold text-gray-700" id="score"></p>
         <p class="text-lg text-gray-500">感謝你挑戰芒果家族小偵探大冒險 🍋😆</p>
-        <button onclick="location.reload()" class="py-2 px-6 text-white font-semibold rounded-full bg-blue-500 hover:bg-blue-600 transition">再玩一次</button>
+        <button class="py-2 px-6 text-white font-semibold rounded-full bg-blue-500 hover:bg-blue-600 transition">再玩一次</button>
     </div>
 </div>
 
@@ -92,7 +94,7 @@ let membersData = [
     {name:"李芝麻",clues:["活潑可愛的工程師肥宅","女兒是他的等比例縮小版"]},
     {name:"岳阿文",clues:["漂亮＋歌喉＋駕駛技術","走到哪都自帶演唱會＋車技表演秀"]},
     {name:"李蒜皮",clues:["有個複製人爸爸","活力無限像插了兩百伏特電池","芒果家族的老么"]},
-    {name:"李阿玟",clues:["金字塔頂尖","家裡有隻黑貓叫李阿皮","氣場強大到連蚊子都必須先預約才能靠近他，否則會被氣場彈飛！","天生骨架可以駕馭各種服裝]},
+    {name:"李阿玟",clues:["金字塔頂尖","家裡有隻黑貓叫李阿皮","氣場強大到連蚊子都必須先預約才能靠近他，否則會被氣場彈飛！","天生骨架可以駕馭各種服裝"]},
     {name:"廖亮亮",clues:["舞蹈女王降臨","遇到辣和燙的食物就會立刻投降"]},
     {name:"廖光光",clues:["高帥到連天花板都為他低頭","漏斗胸和扁平足","果園小開"]},
     {name:"健閔哥",clues:["雲林金城武","外表帥氣，氣場非凡到手機訊號都會自動變滿格"]}
@@ -105,7 +107,12 @@ let current=0, score=0;
 const funnyCorrect=["太棒了！你果然認得他！😆","答對啦！小偵探威武！🎉","正確！芒果會為你鼓掌👏","Bingo! 這是你的分數！🥳"];
 const funnyWrong=["哎呀，答錯了～再試一次！😜","錯啦！芒果在哭😭","不對不對！快重新集中精神💦","Opps! 謎題太難了嗎？"];
 
-function shuffleArray(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}}
+function shuffleArray(array){
+    for(let i=array.length-1;i>0;i--){
+        const j=Math.floor(Math.random()*(i+1));
+        [array[i], array[j]]=[array[j], array[i]];
+    }
+}
 
 function showClues(){
     if(current>=totalQuestions){showResult();return;}
@@ -179,10 +186,20 @@ function checkAnswer(){
     const messageDiv=document.getElementById('message');
     const correctAnswer=members[current].name;
     if(userAnswer===""){messageDiv.innerText="請選擇一個成員名稱！";messageDiv.className="message p-3 rounded-lg text-center bg-yellow-200 text-yellow-800";submitButton.disabled=false;explainerButton.disabled=false;ttsButton.disabled=false;return;}
-    if(userAnswer===correctAnswer){messageDiv.innerHTML=`✅ <strong>答對啦！</strong> ${correctAnswer}！ ${funnyCorrect[Math.floor(Math.random()*funnyCorrect.length)]}`;messageDiv.className="message p-3 rounded-lg text-center bg-green-200 text-green-800";score++;} 
-    else {messageDiv.innerHTML=`❌ <strong>答錯啦！</strong> ${funnyWrong[Math.floor(Math.random()*funnyWrong.length)]}<br>正確答案是：<span class="font-black text-red-600">${correctAnswer}</span>`;messageDiv.className="message p-3 rounded-lg text-center bg-red-200 text-red-800";}
+    if(userAnswer===correctAnswer){
+        messageDiv.innerHTML=`✅ <strong>答對啦！</strong> ${correctAnswer}！ ${funnyCorrect[Math.floor(Math.random()*funnyCorrect.length)]}`;
+        messageDiv.className="message p-3 rounded-lg text-center bg-green-200 text-green-800";score++;
+    } else {
+        messageDiv.innerHTML=`❌ <strong>答錯啦！</strong> ${funnyWrong[Math.floor(Math.random()*funnyWrong.length)]}<br>正確答案是：<span class="font-black text-red-600">${correctAnswer}</span>`;
+        messageDiv.className="message p-3 rounded-lg text-center bg-red-200 text-red-800";
+    }
     current++;
-    setTimeout(()=>{if(current<totalQuestions){showClues();submitButton.disabled=false;explainerButton.disabled=false;ttsButton.disabled=false;}else showResult();},2000);
+    setTimeout(()=>{
+        if(current<totalQuestions){
+            showClues();
+            submitButton.disabled=false; explainerButton.disabled=false; ttsButton.disabled=false;
+        } else showResult();
+    },2000);
 }
 
 function showResult(){
@@ -192,11 +209,22 @@ function showResult(){
     document.getElementById('score').innerText=`你總共答對 ${score} / ${totalQuestions} 位芒果家族成員！ (${percent}%)`;
 }
 
-document.addEventListener('DOMContentLoaded',()=>{
-    members=[...membersData];
+// ------------------ 新增：開始遊戲函式 ------------------
+function startGame(){
+    members = [...membersData];
     shuffleArray(members);
+    current = 0;
+    score = 0;
+    document.getElementById('game').style.display = "block";
+    document.getElementById('result').style.display = "none";
     showClues();
-});
+}
+
+// 初始啟動
+document.addEventListener('DOMContentLoaded', startGame);
+
+// 再玩一次按鈕
+document.getElementById('result').querySelector('button').onclick = startGame;
 </script>
 
 </body>
