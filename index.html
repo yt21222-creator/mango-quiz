@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>找找芒果家族～看你認得幾個！🍋</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+    /* 使用 Tailwind CSS 簡化樣式，並增加 Inter 字體 */
+    body { font-family: "Inter", Arial, sans-serif; }
+    /* 自定義按鈕動畫 */
+    button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(255, 127, 80, 0.4);
+    }
+    button:active {
+        transform: translateY(0);
+        box-shadow: none;
+    }
+    /* 遊戲說明區塊的自訂樣式 */
+    .game-rules {
+        border-left: 5px solid #F97316; /* 橙色邊條 */
+        background-color: #FEF3C7; /* 淺黃色背景 */
+    }
+    /* 下拉選單的樣式調整，確保手機點擊範圍舒適 */
+    #answer_select {
+        appearance: none; /* 移除瀏覽器預設樣式 */
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23ea580c'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd' /%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 1.5rem 1.5rem;
+        padding-right: 2.5rem;
+    }
+</style>
+</head>
+<body class="bg-amber-50 min-h-screen flex items-center justify-center p-4">
+
+<div class="bg-white p-6 md:p-10 rounded-xl shadow-2xl max-w-lg w-full">
+    <h1 class="text-3xl font-extrabold text-center text-orange-600 mb-6 border-b pb-3">
+        找找芒果家族～看你認得幾個！🍋
+    </h1>
+
+    <!-- 遊戲說明區塊 -->
+    <div class="game-rules p-4 mb-6 rounded-lg shadow-md text-gray-700">
+        <h3 class="text-xl font-bold text-orange-600 mb-2 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 mr-2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.15-.17 2.37-.17 3.52 0C14.49 7.69 15.69 8.67 16.4 10.15c.71 1.48 1.05 3.12 1.05 4.88 0 1.63-.34 3.27-.99 4.75-.65 1.48-1.57 2.53-2.6 3.15-.99.59-2.12.89-3.32.89-1.2 0-2.33-.3-3.32-.89-1.03-.62-1.95-1.67-2.6-3.15-.65-1.48-.99-3.09-.99-4.75 0-1.76.34-3.4 1.05-4.88.71-1.48 1.91-2.46 3.09-2.63z" />
+            </svg>
+            遊戲規則 (LLM 增強版)
+        </h3>
+        <ul class="list-disc ml-5 space-y-1 text-sm">
+            <li>遊戲共有 **16 道題目**，題目順序會隨機變化。</li>
+            <li>您將看到成員的特徵或喜好，請從下方的**下拉選單中選擇**您猜測的名字。</li>
+            <li>您可以使用 **✨ LLM 功能**來獲取幫助！</li>
+        </ul>
+    </div>
+    <!-- 遊戲說明區塊結束 -->
+
+    <div id="game" class="space-y-4">
+        <div id="clues-container">
+            <p class="text-sm font-semibold text-gray-500 mb-2" id="question-count">第 1 / 16 題</p>
+            <div class="clue bg-yellow-100 p-4 rounded-lg shadow-inner text-gray-800" id="clues">
+                <!-- 線索將在這裡載入 -->
+            </div>
+        </div>
+        
+        <!-- 新增 LLM 功能按鈕區塊 -->
+        <div class="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-3">
+            <button 
+                id="tts-button"
+                onclick="speakClue()" 
+                class="flex items-center justify-center w-full py-2 text-white font-semibold rounded-lg bg-indigo-500 shadow-md transition duration-300 hover:bg-indigo-600 disabled:opacity-50"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25h4.5a.75.75 0 0 0 .75-.75V5.25a.75.75 0 0 0-.75-.75h-4.5a.75.75 0 0 0-.75.75v2.25c0 .414.336.75.75.75Zm-3 5.25H7.5a.75.75 0 0 0 .75-.75V9.75a.75.75 0 0 0-.75-.75H3.75A.75.75 0 0 0 3 9.75v2.25c0 .414.336.75.75.75Zm-.75 3.75a.75.75 0 0 0 .75.75h4.5a.75.75 0 0 0 .75-.75v-2.25c0-.414-.336-.75-.75-.75h-4.5a.75.75 0 0 0-.75.75v2.25Z" />
+                </svg>
+                ✨ 唸出線索
+            </button>
+            <button 
+                id="explainer-button"
+                onclick="getExplanation()" 
+                class="flex items-center justify-center w-full py-2 text-white font-semibold rounded-lg bg-purple-500 shadow-md transition duration-300 hover:bg-purple-600 disabled:opacity-50"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
+                </svg>
+                ✨ 線索解釋器
+            </button>
+        </div>
+
+        <!-- LLM 輸出區塊和 TTS Audio Player -->
+        <div id="explanation-output" class="p-4 bg-purple-50 rounded-lg border border-purple-200 text-gray-700 text-sm italic" style="display:none;">
+            <!-- LLM Explanation will go here -->
+        </div>
+        <audio id="tts-audio" class="w-full mt-2" style="display:none;" controls></audio>
+        <!-- LLM 輸出區塊和 TTS Audio Player 結束 -->
+        
+        <!-- 替換為下拉式選單 -->
+        <select
+            id="answer_select" 
+            class="w-full p-3 border-2 border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition duration-300 text-lg"
+        >
+            <option value="">-- 請選擇您的答案 --</option>
+            <!-- 選項將由 JavaScript 動態生成 -->
+        </select>
+        
+        <button 
+            onclick="checkAnswer()" 
+            class="w-full py-3 text-white font-bold rounded-lg bg-orange-500 shadow-md transition duration-330 hover:bg-orange-600"
+        >
+            提交答案
+        </button>
+        
+        <div class="message p-3 rounded-lg text-center" id="message">
+            <!-- 答題結果將在這裡顯示 -->
+        </div>
+    </div>
+
+    <div id="result" class="text-center space-y-4 pt-6" style="display:none;">
+        <h2 class="text-4xl font-black text-green-600">🎉 遊戲結束！🎉</h2>
+        <p class="text-2xl font-bold text-gray-700" id="score"></p>
+        <p class="text-lg text-gray-500">感謝你挑戰芒果家族小偵探大冒險 🍋😆</p>
+        <button 
+            onclick="location.reload()" 
+            class="py-2 px-6 text-white font-semibold rounded-full bg-blue-500 hover:bg-blue-600 transition"
+        >
+            再玩一次
+        </button>
+    </div>
+</div>
+
+<script>
+// --- 芒果家族成員的最新完整資料 (共 16 位) ---
+let membersData = [
+    {name: "芒果哥", clues: ["人生已經達到軟Q巔峰", "彎腰都像彈力玩具"]},
+    {name: "小英姊", clues: ["拍照界的交叉腿戰士", "每次出鏡都必備剪刀腳和側身技能"]},
+    {name: "宣萱姊", clues: ["腦子裡裝了全世界人的喜好資料庫", "她讓你懷疑：秒回答全世界問題"]},
+    {name: "阿福哥", clues: ["帥＋歌喉雙技能", "走路帶BGM的傳說級存在！", "聚會人氣王"]},
+    {name: "陳臻臻", clues: ["腦中自帶 TWICE 歌曲播放清單", "聽到旋律就自動起舞"]},
+    {name: "陳妹妹", clues: ["骨裂界的VIP", "二次入場券已領！", "個性超強"]},
+    {name: "陳阿叡", clues: ["左手轉魔方，右手甩舞步", "唯一能同時打破重力和時間的國中生"]},
+    {name: "李歪頭", clues: ["人見人愛", "笑容治癒", "聚會焦點"]},
+    {name: "尚勳哥", clues: ["長得帥連自拍都嫉妒", "腿長到拍照不用角度", "鏡頭都自動拉遠"]},
+    {name: "李芝麻", clues: ["活潑可愛的肥宅", "家裡有Wi-Fi和老婆"]},
+    {name: "岳阿文", clues: ["漂亮＋歌喉＋駕駛技術", "走到哪都自帶演唱會＋車技表演秀"]},
+    {name: "李蒜皮", clues: ["活力無限", "像插了兩百伏特電池", "會唱Golden"]},
+    {name: "李阿玟", clues: ["金字塔頂尖 VIP 座位", "連蚊子都要預約才能接近", "氣場強大"]},
+    {name: "廖亮亮", clues: ["舞蹈女王降臨", "連地板都被踩出節奏了！"]},
+    {name: "廖光光", clues: ["高帥到連天花板都想低頭看他", "胸前小漏斗像專屬設計", "腳扁得像在地板上貼了加速器"]},
+    {name: "健閔哥", clues: ["雲林金城武", "外表帥氣，氣場非凡"]}
+];
+
+let totalQuestions = membersData.length;
+let members = []; // 實際用於遊戲的隨機化陣列
+let allNames = membersData.map(m => m.name).sort(); // 所有名字，用於下拉選單排序
+
+let current = 0;
+let score = 0;
+
+// 隨機搞笑提示
+const funnyCorrect = ["太棒了！你果然認得他！😆", "答對啦！小偵探威武！🎉", "正確！芒果會為你鼓掌👏", "Bingo! 這是你的分數！🥳"];
+const funnyWrong = ["哎呀，答錯了～再試一次！😜", "錯啦！芒果在哭😭", "不對不對！快重新集中精神💦", "Opps! 謎題太難了嗎？"];
+
+// --- Gemini API Configuration ---
+const apiKey = ""; 
+const GEMINI_TEXT_API = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+const GEMINI_TTS_API = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+
+// --- Utility Functions for TTS (PCM to WAV conversion) ---
+
+/**
+ * 將 Base64 字串轉換為 ArrayBuffer
+ */
+function base64ToArrayBuffer(base64) {
+    const binaryString = atob(base64);
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes.buffer;
+}
+
+/**
+ * 將 PCM 數據轉換為 WAV Blob
+ * @param {Int16Array} pcm16 - 16位有符號 PCM 數據
+ * @param {number} sampleRate - 採樣率
+ * @returns {Blob} - WAV 格式的 Blob
+ */
+function pcmToWav(pcm16, sampleRate) {
+    const numChannels = 1;
+    const bitDepth = 16;
+    const byteRate = sampleRate * numChannels * (bitDepth / 8);
+    const blockAlign = numChannels * (bitDepth / 8);
+    
+    const buffer = new ArrayBuffer(44 + pcm16.byteLength);
+    const view = new DataView(buffer);
+    let offset = 0;
+
+    /* 寫入字串 (四字節) */
+    function writeString(s) {
+        for (let i = 0; i < s.length; i++) {
+            view.setUint8(offset + i, s.charCodeAt(i));
+        }
+        offset += s.length;
+    }
+
+    /* 寫入 32 位整數 (四字節) */
+    function writeUint32(i) {
+        view.setUint32(offset, i, true);
+        offset += 4;
+    }
+
+    /* 寫入 16 位整數 (兩字節) */
+    function writeUint16(i) {
+        view.setUint16(offset, i, true);
+        offset += 2;
+    }
+
+    // RIFF 區塊
+    writeString('RIFF');
+    writeUint32(36 + pcm16.byteLength); // ChunkSize
+    writeString('WAVE');
+
+    // FMT 區塊
+    writeString('fmt ');
+    writeUint32(16); // Subchunk1Size (16 for PCM)
+    writeUint16(1);  // AudioFormat (1 for PCM)
+    writeUint16(numChannels);
+    writeUint32(sampleRate);
+    writeUint32(byteRate);
+    writeUint16(blockAlign);
+    writeUint16(bitDepth);
+
+    // DATA 區塊
+    writeString('data');
+    writeUint32(pcm16.byteLength); // Subchunk2Size
+    
+    // 寫入 PCM 數據
+    const pcmBytes = new Uint8Array(pcm16.buffer);
+    for (let i = 0; i < pcmBytes.length; i++) {
+        view.setUint8(offset + i, pcmBytes[i]);
+    }
+
+    return new Blob([buffer], { type: 'audio/wav' });
+}
+
+/**
+ * 處理 API 呼叫的錯誤和重試 (指數退避)
+ * @param {Function} apiCall - 執行 API 呼叫的函數
+ * @param {number} maxRetries - 最大重試次數
+ * @returns {Promise<Response>}
+ */
+async function retryFetch(apiCall, maxRetries = 3) {
+    let lastError = null;
+    for (let i = 0; i < maxRetries; i++) {
+        try {
+            const response = await apiCall();
+            if (response.ok) {
+                return response;
+            }
+            // 對於非 2xx 狀態碼，拋出錯誤以觸發重試
+            throw new Error(`API returned status ${response.status}`);
+        } catch (error) {
+            lastError = error;
+            if (i < maxRetries - 1) {
+                const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+        }
+    }
+    console.error("Gemini API call failed after max retries:", lastError);
+    throw lastError;
+}
+
+/**
+ * Fisher-Yates 洗牌演算法，用於隨機打亂成員順序。
+ * @param {Array} array - 要打亂的陣列
+ */
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]]; // 交換元素
+    }
+}
+
+// --- LLM Feature Functions ---
+
+/**
+ * 使用 Gemini API 生成當前線索的幽默解釋。
+ */
+async function getExplanation() {
+    const explainerButton = document.getElementById('explainer-button');
+    const outputDiv = document.getElementById('explanation-output');
+    
+    // 確保當前有題目
+    if (current >= totalQuestions) {
+         outputDiv.innerHTML = '<p class="text-red-500">遊戲已結束，請重新開始。</p>';
+         outputDiv.style.display = 'block';
+         return;
+    }
+
+    const currentClues = members[current].clues.join("，");
+    const userQuery = `請以一位風趣、了解所有成員的芒果家族敘事者身份，根據以下線索，提供一段 2-3 句話，極具戲劇性和娛樂性的角色解釋，但**不能提到成員的名字**。線索：${currentClues}`;
+    const systemPrompt = "你是一位熱情、風趣的『芒果家族』問答遊戲敘事者。你的任務是放大線索中的戲劇性，並以娛樂的口吻對線索進行解釋。你的回答必須是繁體中文，且長度需簡潔（2-3 句話）。";
+
+    // 設置 loading 狀態
+    explainerButton.disabled = true;
+    explainerButton.innerHTML = `<svg class="animate-spin h-5 w-5 mr-3 text-white" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> 正在生成解釋...`;
+    outputDiv.style.display = 'block';
+    outputDiv.innerHTML = '<p class="text-center text-purple-500">正在召喚芒果敘事者...</p>';
+
+    const payload = {
+        contents: [{ parts: [{ text: userQuery }] }],
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+    };
+
+    try {
+        const response = await retryFetch(() => fetch(GEMINI_TEXT_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }));
+        
+        const result = await response.json();
+        const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "抱歉，無法生成解釋。請再試一次。";
+
+        outputDiv.innerHTML = `<p class="font-bold text-purple-700 mb-1">芒果敘事者：</p><p>${text}</p>`;
+
+    } catch (e) {
+        outputDiv.innerHTML = `<p class="text-red-500">連線錯誤或 API 呼叫失敗，請檢查網路或稍後再試。`;
+    } finally {
+        explainerButton.disabled = false;
+        explainerButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" /></svg> ✨ 線索解釋器`;
+    }
+}
+
+
+/**
+ * 使用 Gemini TTS API 讀出當前線索。
+ */
+async function speakClue() {
+    const ttsButton = document.getElementById('tts-button');
+    const audioPlayer = document.getElementById('tts-audio');
+    const outputDiv = document.getElementById('explanation-output');
+
+    // 確保當前有題目
+    if (current >= totalQuestions) {
+         outputDiv.innerHTML = '<p class="text-red-500">遊戲已結束，請重新開始。</p>';
+         outputDiv.style.display = 'block';
+         return;
+    }
+
+    const currentClueText = members[current].clues.join("。");
+    // 請用輕鬆愉快的語氣，以台灣中文的語調，讀出以下線索：
+    const ttsPrompt = `請用輕鬆愉快的語氣讀出以下線索：${currentClueText}`;
+
+    // 設置 loading 狀態
+    ttsButton.disabled = true;
+    ttsButton.innerHTML = `<svg class="animate-spin h-5 w-5 mr-3 text-white" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> 正在生成語音...`;
+    outputDiv.style.display = 'block';
+    outputDiv.innerHTML = '<p class="text-center text-indigo-500">正在生成語音線索...</p>';
+    audioPlayer.style.display = 'none'; // 隱藏播放器直到準備好
+
+    const payload = {
+        contents: [{ parts: [{ text: ttsPrompt }] }],
+        generationConfig: {
+            responseModalities: ["AUDIO"],
+            speechConfig: {
+                voiceConfig: {
+                    prebuiltVoiceConfig: { voiceName: "Puck" } // Upbeat voice
+                }
+            }
+        },
+        model: "gemini-2.5-flash-preview-tts"
+    };
+
+    try {
+        const response = await retryFetch(() => fetch(GEMINI_TTS_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }));
+        
+        const result = await response.json();
+        const part = result?.candidates?.[0]?.content?.parts?.[0];
+        const audioData = part?.inlineData?.data;
+        const mimeType = part?.inlineData?.mimeType;
+
+        if (audioData && mimeType && mimeType.startsWith("audio/")) {
+            const sampleRateMatch = mimeType.match(/rate=(\d+)/);
+            if (!sampleRateMatch) throw new Error("Sample rate not found in MIME type.");
+            const sampleRate = parseInt(sampleRateMatch[1], 10);
+            
+            const pcmData = base64ToArrayBuffer(audioData);
+            const pcm16 = new Int16Array(pcmData);
+            const wavBlob = pcmToWav(pcm16, sampleRate);
+            const audioUrl = URL.createObjectURL(wavBlob);
+            
+            audioPlayer.src = audioUrl;
+            audioPlayer.style.display = 'block';
+            audioPlayer.play();
+            
+            outputDiv.innerHTML = `<p class="text-center text-indigo-700">語音已準備好播放！🎧</p>`;
+        } else {
+            throw new Error("Invalid audio data or response structure.");
+        }
+    } catch (e) {
+        console.error(e);
+        outputDiv.innerHTML = `<p class="text-red-500">語音生成失敗：${e.message || '連線錯誤'}。`;
+    } finally {
+        ttsButton.disabled = false;
+        ttsButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25h4.5a.75.75 0 0 0 .75-.75V5.25a.75.75 0 0 0-.75-.75h-4.5a.75.75 0 0 0-.75.75v2.25c0 .414.336.75.75.75Zm-3 5.25H7.5a.75.75 0 0 0 .75-.75V9.75a.75.75 0 0 0-.75-.75H3.75A.75.75 0 0 0 3 9.75v2.25c0 .414.336.75.75.75Zm-.75 3.75a.75.75 0 0 0 .75.75h4.5a.75.75 0 0 0 .75-.75v-2.25c0-.414-.336-.75-.75-.75h-4.5a.75.75 0 0 0-.75.75v2.25Z" /></svg> ✨ 唸出線索`;
+    }
+}
+
+
+/**
+ * 顯示當前成員的線索並填充下拉選單。
+ */
+function showClues() {
+    // 檢查是否所有題目都已完成
+    if (current >= totalQuestions) {
+        showResult();
+        return;
+    }
+
+    const clueDiv = document.getElementById('clues');
+    const questionCount = document.getElementById('question-count');
+    const selectElement = document.getElementById('answer_select');
+
+    // 1. 更新問題計數
+    questionCount.innerText = `第 ${current + 1} / ${totalQuestions} 題`;
+
+    // 2. 顯示線索
+    clueDiv.innerHTML = "";
+    members[current].clues.forEach((c, i) => {
+        clueDiv.innerHTML += `<p class="${i > 0 ? 'mt-2' : ''} text-base">**線索 ${i + 1}:** ${c}</p>`;
+    });
+
+    // 3. 填充下拉選單
+    selectElement.innerHTML = '<option value="" disabled selected>-- 請選擇您的答案 --</option>'; // 重置並添加預設選項
+    
+    // 遍歷所有成員名稱，添加到下拉選單中
+    allNames.forEach(name => {
+        const option = document.createElement('option');
+        option.value = name;
+        option.text = name;
+        selectElement.appendChild(option);
+    });
+    
+    // 4. 清空提示訊息和 LLM 輸出區
+    document.getElementById('message').innerText = "";
+    document.getElementById('message').className = "message p-3 rounded-lg text-center";
+    
+    // 重置 LLM 區域
+    document.getElementById('explanation-output').style.display = 'none';
+    document.getElementById('explanation-output').innerHTML = '';
+    const audioPlayer = document.getElementById('tts-audio');
+    audioPlayer.pause();
+    audioPlayer.src = '';
+    audioPlayer.style.display = 'none';
+    
+    // 5. 將焦點移回選單
+    selectElement.focus();
+}
+
+/**
+ * 檢查使用者提交的答案是否正確。
+ */
+function checkAnswer() {
+    // 防止重複點擊，先禁用按鈕
+    const submitButton = document.querySelector('button[onclick="checkAnswer()"]');
+    const explainerButton = document.getElementById('explainer-button');
+    const ttsButton = document.getElementById('tts-button');
+
+    submitButton.disabled = true;
+    explainerButton.disabled = true;
+    ttsButton.disabled = true;
+
+    const selectElement = document.getElementById('answer_select');
+    const userAnswer = selectElement.value; // 直接獲取選中的值
+    const messageDiv = document.getElementById('message');
+    const correctAnswer = members[current].name;
+
+    if (userAnswer === "") {
+        messageDiv.innerText = "請選擇一個成員名稱！";
+        messageDiv.className = "message p-3 rounded-lg text-center bg-yellow-200 text-yellow-800";
+        submitButton.disabled = false;
+        explainerButton.disabled = false;
+        ttsButton.disabled = false;
+        return;
+    }
+    
+    // 直接比對選中的值和正確答案（因為下拉選單的值是乾淨的）
+    if (userAnswer === correctAnswer) {
+        // 答對邏輯
+        messageDiv.innerHTML = `✅ **答對啦！** ${correctAnswer}！ ${funnyCorrect[Math.floor(Math.random() * funnyCorrect.length)]}`;
+        messageDiv.className = "message p-3 rounded-lg text-center bg-green-200 text-green-800";
+        score++;
+    } else {
+        // 答錯邏輯
+        messageDiv.innerHTML = `❌ **答錯啦！** ${funnyWrong[Math.floor(Math.random() * funnyWrong.length)]}<br>正確答案是：<span class="font-black text-red-600">${correctAnswer}</span>`;
+        messageDiv.className = "message p-3 rounded-lg text-center bg-red-200 text-red-800";
+    }
+
+    current++;
+
+    if (current < totalQuestions) {
+        // 答題後等待 2 秒顯示下一題
+        setTimeout(() => {
+            showClues();
+            submitButton.disabled = false; // 重新啟用按鈕
+            explainerButton.disabled = false;
+            ttsButton.disabled = false;
+        }, 2000);
+    } else {
+        // 答完所有題目後顯示結果
+        setTimeout(showResult, 2000);
+    }
+}
+
+/**
+ * 顯示遊戲結果。
+ */
+function showResult() {
+    document.getElementById('game').style.display = "none";
+    document.getElementById('result').style.display = "block";
+    document.getElementById('score').innerText = `你總共答對 ${score} / ${totalQuestions} 位芒果家族成員！`;
+}
+
+// --- 啟動遊戲：確保在 DOM 內容載入完畢後才執行 ---
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. 隨機打亂成員順序，作為遊戲的題目順序
+    members = [...membersData]; // 複製一份
+    shuffleArray(members); 
+    
+    // 2. 顯示第一組線索並填充下拉選單
+    showClues();
+});
+</script>
+
+</body>
+</html>
